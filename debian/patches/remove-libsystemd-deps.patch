@@ -1,0 +1,17 @@
+Removed libsystemd deps in src/devices/wwan/nm-modem-manager.c
+Index: network-manager/src/devices/wwan/nm-modem-manager.c
+===================================================================
+--- network-manager.orig/src/devices/wwan/nm-modem-manager.c
++++ network-manager/src/devices/wwan/nm-modem-manager.c
+@@ -27,11 +27,7 @@
+ #include <string.h>
+ #include <libmm-glib.h>
+ 
+-#if HAVE_LIBSYSTEMD
+-#include <systemd/sd-daemon.h>
+-#else
+ #define sd_booted() FALSE
+-#endif
+ 
+ #include "nm-dbus-compat.h"
+ #include "nm-modem.h"

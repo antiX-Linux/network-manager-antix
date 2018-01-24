@@ -1,0 +1,69 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/architecture.mk
+
+PPPD_PLUGIN_DIR := $(shell dh_ppp --plugin-dir)
+
+%:
+	dh $@ --with gir,ppp
+
+autoreconf:
+	gtkdocize --copy
+	autopoint --force
+	AUTOPOINT='intltoolize --automake --copy' autoreconf --verbose --force --install
+
+override_dh_autoreconf:
+	dh_autoreconf debian/rules -- autoreconf
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		--libexecdir=/usr/lib/NetworkManager \
+		--with-pppd-plugin-dir=$(PPPD_PLUGIN_DIR) \
+		--with-pppd=/usr/sbin/pppd \
+		--with-resolvconf=/sbin/resolvconf \
+		--with-dhclient=/sbin/dhclient \
+		--with-iptables=/sbin/iptables \
+		--with-dnsmasq=/usr/sbin/dnsmasq \
+		--with-dnssec-trigger=/usr/lib/dnssec-trigger/dnssec-trigger-script \
+                --with-systemdsystemunitdir=no \
+		--with-udev-dir=/lib/udev \
+		--with-crypto=gnutls \
+		--with-session-tracking=no \
+		--with-suspend-resume=consolekit \
+		--with-modem-manager-1 \
+		--with-nmtui \
+		--with-nmcli \
+		--disable-more-warnings \
+		--disable-modify-system \
+		--enable-polkit \
+		--enable-polkit-agent \
+		--enable-ppp \
+		--enable-ifupdown \
+		--enable-config-plugin-ibft \
+		--enable-introspection \
+		--enable-gtk-doc \
+		--enable-concheck \
+		--enable-teamdctl \
+		--enable-json-validation \
+		--enable-bluez5-dun \
+		--with-selinux=yes \
+		--with-libaudit=yes
+
+override_dh_install:
+	dh_install -X.la --list-missing
+	install -m 755 debian/network-manager-dispatcher.script \
+		debian/network-manager/etc/NetworkManager/dispatcher.d/01ifupdown
+	install -m 755 debian/ifblacklist_migrate.sh \
+		debian/network-manager/usr/lib/NetworkManager
+
+override_dh_makeshlibs:
+	dh_makeshlibs -X/usr/lib/$(DEB_HOST_MULTIARCH)/NetworkManager/ -X/usr/lib/pppd/
+
+override_dh_strip:
+	dh_strip --dbgsym-migration='network-manager-dbg (<< 1.1.91-2~)'
+
+override_dh_installinit:
+	dh_installinit -pnetwork-manager -R -- start 26 2 3 4 5 . stop 88 0 1 6 .
+
+override_dh_ppp:
+	dh_ppp --breaks
